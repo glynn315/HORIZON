@@ -1,7 +1,7 @@
 <template>
-  <div class="flex h-screen w-full flex-wrap bg-zinc-800">
+  <div class="flex h-screen w-full flex-wrap bg-white">
     <aside class="relative flex h-screen w-60 flex-col bg-white">
-      <h1 class="flex pl-10 pt-14 text-3xl font-normal text-zinc-800">Horizon</h1>
+      <h1 class="flex pl-10 pt-14 text-2xl !font-bold font-normal text-zinc-800">&lt;/HORIZON&gt;</h1>
       <nav class="space-y-2 mt-6">
         <div
           v-for="(topic, index) in topics"
@@ -29,11 +29,11 @@
     <main class="flex-1 p-10 overflow-y-scroll h-dvh">
       <div v-if="currentTopic">
         <div v-if="ModuleTopic">
-          <h1 class="text-2xl font-bold mb-1 text-white">{{ currentTopic.title }}</h1>
-          <p class="text-sm text-gray-300 mb-6">{{ currentTopic.module_name }}</p>
+          <h1 class="text-2xl font-bold mb-1 text-black">{{ currentTopic.title }}</h1>
+          <p class="text-sm text-gray-800 mb-6">{{ currentTopic.module_name }}</p>
 
           <div class="h-[700px] overflow-auto scrollbar-w-1">
-            <div v-html="currentTopic.content" class="leading-relaxed text-white"></div>
+            <div v-html="currentTopic.content" class="leading-relaxed text-black"></div>
           </div>
 
           <div v-if="currentTopic.code" class="bg-gray-900 text-green-300 p-4 rounded my-4 font-mono">
@@ -43,7 +43,7 @@
           <div class="mt-5 flex justify-end">
             <button
               @click="startPostTest"
-              class="py-3 bg-green-600 rounded-full w-72 text-white"
+              class="py-3 bg-green-600 rounded-full w-72 text-black"
             >
               Start Post Test
             </button>
@@ -51,47 +51,49 @@
         </div>
 
         <div v-else-if="postTestDisplay">
-          <h1 class="text-4xl text-white">QUIZ</h1>
+          
 
           <!-- Question Block -->
           <div v-if="PostTest.length && currentPostQuestionIndex < PostTest.length" class="items-center flex justify-center gap-4 mb-4 w-full mt-[200px]">
-            <div class="text-white p-10 rounded-xl w-full max-w-xl mx-auto border">
-              <p class="font-medium text-2xl mb-2">
-                Question {{ currentPostQuestionIndex + 1 }}:<br />
-                {{ PostTest[currentPostQuestionIndex].description }} ?
-              </p>
-              <div
-                v-if="PostTest[currentPostQuestionIndex].questionType === 'Choices'"
-                class="bg-[#5A5A5A] p-8 rounded-2xl"
-              >
-                <button
-                  v-for="(choice, i) in PostTest[currentPostQuestionIndex].choices"
-                  :key="i"
-                  class="flex items-center gap-4 w-full p-4 mb-3 text-left rounded-lg border-2 transition-all duration-200 hover:bg-gray-600"
-                  :class="{
-                    'border-blue-500 bg-blue-600 text-white': PostTest[currentPostQuestionIndex].userAnswer === choice,
-                    'border-gray-400 bg-gray-700 text-gray-200': PostTest[currentPostQuestionIndex].userAnswer !== choice
-                  }"
-                  @click="selectChoice(choice)"
+            <div class="text-black p-10 rounded-xl w-full max-w-2xl mx-auto">
+              <h1 class="text-4xl text-black">QUIZ</h1>
+              <div class="border border-2 border-black p-7 rounded-3xl mt-3">
+                <p class="font-medium text-2xl mb-2">
+                  Question {{ currentPostQuestionIndex + 1 }}:<br />
+                  {{ PostTest[currentPostQuestionIndex].description }} ?
+                </p>
+                <div
+                  v-if="PostTest[currentPostQuestionIndex].questionType === 'Choices'"
+                  class="rounded-2xl"
                 >
-                  {{ choice }}
-                </button>
+                  <button
+                    v-for="(choice, i) in PostTest[currentPostQuestionIndex].choices"
+                    :key="i"
+                    class="flex items-center gap-4 w-full p-4 pl-7 mb-3 text-left rounded-full border-2 transition-all duration-200 hover:bg-gray-600"
+                    :class="{
+                      'border-blue-500 bg-blue-600 text-black': PostTest[currentPostQuestionIndex].userAnswer === choice,
+                      'border-gray-400 bg-gray-700 text-gray-200': PostTest[currentPostQuestionIndex].userAnswer !== choice
+                    }"
+                    @click="selectChoice(choice)"
+                  >
+                    {{ choice }}
+                  </button>
+                </div>
+                <div
+                  v-else-if="PostTest[currentPostQuestionIndex].questionType === 'Blank'"
+                  class="flex flex-col justify-end items-end"
+                >
+                  <input
+                    type="text"
+                    class="border p-1 rounded w-full text-black"
+                    v-model="PostTest[currentPostQuestionIndex].userAnswer"
+                    placeholder="Type your answer..."
+                    @keydown.enter="onAnswerPost"
+                  />
               </div>
-              <div
-                v-else-if="PostTest[currentPostQuestionIndex].questionType === 'Blank'"
-                class="flex flex-col justify-end items-end"
-              >
-                <input
-                  type="text"
-                  class="border p-1 rounded w-full text-black"
-                  v-model="PostTest[currentPostQuestionIndex].userAnswer"
-                  placeholder="Type your answer..."
-                  @keydown.enter="onAnswerPost"
-                />
-                <button
-                  @click="onAnswerPost"
-                  class="mt-2 bg-[#4AC887] text-black px-4 py-2 rounded-full w-32"
-                >
+              </div>
+              <div class="w-full flex justify-end">
+                <button @click="onAnswerPost" class="mt-2 bg-[#4AC887] text-black px-4 py-2 rounded-full w-32">
                   Next
                 </button>
               </div>
@@ -102,33 +104,33 @@
             <button
               v-if="hasNextTopic"
               @click="goToNextTopic"
-              class="bg-blue-600 px-6 py-3 rounded-full text-white text-lg"
+              class="bg-blue-600 px-6 py-3 rounded-full text-black text-lg"
             >
               Continue to Next Topic
             </button>
             <button
               v-else
               @click="completeCourse"
-              class="bg-green-600 px-6 py-3 rounded-full text-white text-lg"
+              class="bg-green-600 px-6 py-3 rounded-full text-black text-lg"
             >
               🎓 Complete Course
             </button>
           </div>
           <div v-else-if="PostTest.length && currentPostQuestionIndex >= PostTest.length" class=" flex flex-row justify-center w-full">
             <div class="border text-center p-10 w-1/3 rounded-2xl">
-              <p class="text-white text-xl mb-4">You completed all Post-Test questions.</p>
+              <p class="text-black text-xl mb-4">You completed all Post-Test questions.</p>
               <button
                 @click="submitQuiz('post')"
-                class="bg-green-600 text-white px-4 py-2 rounded mt-4"
+                class="bg-green-600 text-black px-4 py-2 rounded mt-4"
               >
                 Submit Post-Test
               </button>
             </div>
           </div>
         </div>
-        <div v-else-if="quizCompleted" class="text-center mt-10 text-white">
+        <div v-else-if="quizCompleted" class="text-center mt-10 text-black">
           <p class="text-2xl mb-2">
-            You {{ postTestResult === 'pass' ? 'passed' : 'did not pass' }} the post-test.
+            {{ postTestResult === 'pass' ? 'CONGRATULATIONS' : 'Oops! You didnt pass this quiz' }}
           </p>
           <p v-if="maxScore" class="text-xl mb-6">
             Your Score: {{ userTotalScore }} / {{ maxScore }}
@@ -136,7 +138,7 @@
           <button
             v-if="postTestResult === 'fail'"
             @click="retryLessons"
-            class="bg-red-600 px-6 py-3 rounded-full text-white text-lg"
+            class="bg-red-600 px-6 py-3 rounded-full text-black text-lg"
           >
             Retry from First Lesson
           </button>
@@ -196,22 +198,17 @@
             </div>
 
             <div v-else-if="skillTestsCompleted && skillTests.length">
-              <p class="text-2xl mb-4">🎉 You completed all Skill Tests!</p>
-              <p class="text-xl mb-6">
-                Your Total Score: {{ skillTestTotalScore }} / {{ skillTestMaxScore }}
-              </p>
-
               <button
                 v-if="hasNextTopic"
                 @click="goToNextTopic"
-                class="bg-green-600 px-6 py-3 rounded-full text-white text-lg"
+                class="bg-green-600 px-6 py-3 rounded-full text-black text-lg"
               >
                 Continue to Next Topic
               </button>
               <button
                 v-else
                 @click="completeCourse"
-                class="bg-blue-600 px-6 py-3 rounded-full text-white text-lg"
+                class="bg-blue-600 px-6 py-3 rounded-full text-black text-lg"
               >
                 Complete Course
               </button>
@@ -221,7 +218,7 @@
             <div v-else-if="!skillTests.length">
               <button
                 @click="hasNextTopic ? goToNextTopic() : completeCourse()"
-                class="bg-green-600 px-6 py-3 rounded-full text-white text-lg"
+                class="bg-green-600 px-6 py-3 rounded-full text-black text-lg"
               >
                 Continue
               </button>
@@ -313,7 +310,7 @@ export default {
     async fetchUserDifficulty() {
       const res = await fetch(`/api/user-difficulty/${this.user.id}`);
       const result = await res.json();
-      const difficultyRecord = result.find(d => d.course_id === 1);
+      const difficultyRecord = result.find(d => d.course_id === 2);
       this.selectedDifficulty = difficultyRecord?.difficulty_level || 1;
     },
     async fetchSkillTests() {
