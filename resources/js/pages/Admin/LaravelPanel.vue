@@ -32,7 +32,7 @@
                 <div v-for="course in courses.filter((c) => c && c.id === 2)" :key="'laravel-' + course.id" class="mb-6 rounded">
                     <div class="mb-4 flex border-b">
                         <button
-                            v-for="tab in ['create', 'uploaded', 'archived']"
+                            v-for="tab in ['uploaded' , 'create', 'archived']"
                             :key="tab"
                             @click="activeTab[course.id] = tab"
                             :class="[
@@ -40,48 +40,8 @@
                                 activeTab[course.id] === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-blue-500',
                             ]"
                         >
-                            {{ tab === 'create' ? 'Create New Topic' : tab === 'uploaded' ? 'Uploaded Topics' : 'Archived Topics'}}
+                            {{ tab === 'uploaded' ? 'Uploaded Topics' : tab === 'create' ? 'Create New Topics' : 'Archived Topics'}}
                         </button>
-                    </div>
-                    <div v-if="activeTab[course.id] === 'create'" class="p-5">
-                        <form @submit.prevent="createStandaloneTopicForCourse(course.id)" class="mb-4 w-full space-y-4">
-                            <div class="flex flex-row gap-3">
-                                <div class="flex flex-col w-3/6">
-                                    <label class="mb-1 text-sm font-medium">Topic Title <span class="text-red-500">*</span></label>
-                                    <input v-model="newTopics[course.id].title" placeholder="Enter topic title" class="rounded-md border p-2" required />
-                                </div>
-                                <div class="flex flex-col w-2/6">
-                                    <label class="mb-1 text-sm font-medium">Module Name <span class="text-red-500">*</span></label>
-                                    <input
-                                        v-model="newTopics[course.id].module_name"
-                                        placeholder="Enter module name"
-                                        class="rounded-md border p-2"
-                                        required
-                                    />
-                                </div>
-                                <div class="flex flex-col  w-1/6">
-                                    <label class="block font-medium">Difficulty</label>
-                                    <select v-model="newTopics[course.id].difficulty" class="w-full rounded border p-2" required>
-                                        <option disabled value="">-- Select Difficulty --</option>
-                                        <option value="1">Beginner</option>
-                                        <option value="2">Intermediate</option>
-                                        <option value="3">Advanced</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <label class="block font-medium">Content</label>
-                            <QuillEditor
-                                v-model:content="newTopics[course.id].content"
-                                contentType="html"
-                                class="rounded border bg-white"
-                                toolbar="full"
-                            />
-                            <button type="submit" class="rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700">
-                                <span v-if="newTopics[course.id].loading">Adding...</span>
-                                <span v-else>Add Topic</span>
-                            </button>
-                        </form>
                     </div>
                     <div v-if="activeTab[course.id] === 'uploaded'" class="p-5">
                         <div v-if="errorMessages[course.id]" class="mb-2 text-red-500">{{ errorMessages[course.id] }}</div>
@@ -132,6 +92,46 @@
                                 </div>
                             </li>
                         </ul>
+                    </div>
+                    <div v-if="activeTab[course.id] === 'create'" class="p-5">
+                        <form @submit.prevent="createStandaloneTopicForCourse(course.id)" class="mb-4 w-full space-y-4">
+                            <div class="flex flex-row gap-3">
+                                <div class="flex flex-col w-3/6">
+                                    <label class="mb-1 text-sm font-medium">Topic Title <span class="text-red-500">*</span></label>
+                                    <input v-model="newTopics[course.id].title" placeholder="Enter topic title" class="rounded-md border p-2" required />
+                                </div>
+                                <div class="flex flex-col w-2/6">
+                                    <label class="mb-1 text-sm font-medium">Module Name <span class="text-red-500">*</span></label>
+                                    <input
+                                        v-model="newTopics[course.id].module_name"
+                                        placeholder="Enter module name"
+                                        class="rounded-md border p-2"
+                                        required
+                                    />
+                                </div>
+                                <div class="flex flex-col  w-1/6">
+                                    <label class="block font-medium">Difficulty</label>
+                                    <select v-model="newTopics[course.id].difficulty" class="w-full rounded border p-2" required>
+                                        <option disabled value="">-- Select Difficulty --</option>
+                                        <option value="1">Beginner</option>
+                                        <option value="2">Intermediate</option>
+                                        <option value="3">Advanced</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label class="block font-medium">Content</label>
+                            <QuillEditor
+                                v-model:content="newTopics[course.id].content"
+                                contentType="html"
+                                class="rounded border bg-white"
+                                toolbar="full"
+                            />
+                            <button type="submit" class="rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700">
+                                <span v-if="newTopics[course.id].loading">Adding...</span>
+                                <span v-else>Add Topic</span>
+                            </button>
+                        </form>
                     </div>
                     <div v-if="activeTab[course.id] === 'archived'" class="p-5">
                         <div v-if="archivedTopics[course.id] && archivedTopics[course.id].length > 0">
@@ -814,7 +814,7 @@ const fetchCourses = async () => {
     for (const course of courses.value) {
         newTopics.value[course.id] = { title: '', content: '', module_name: '', difficulty: '', loading: false };
         expandedCourses.value[course.id] = false;
-        activeTab.value[course.id] = 'create';
+        activeTab.value[course.id] = 'uploaded';
 
         const topicUrl = course.name === 'Laravel Frameworks' ? `/api/courses/${course.id}/laravel-topics` : `/api/courses/${course.id}/topics`;
 

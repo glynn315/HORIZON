@@ -1,30 +1,42 @@
 <template>
   <div class="flex h-screen w-full flex-wrap bg-zinc-800">
     <!-- Sidebar -->
-    <aside class="relative flex h-screen w-60 flex-col bg-white">
-      <h1 class="flex pl-10 pt-14 text-3xl font-normal text-zinc-800">Horizon</h1>
-      <div class="absolute left-10 top-[124px] w-40 border-t border-gray-200"></div>
-      <div class="absolute left-4 top-[138px] h-16 w-16 rounded-full bg-white shadow-md"></div>
-      <p v-if="auth?.user" class="pl-24 pt-16 text-base font-normal text-zinc-800">
+    <aside class="flex h-screen w-60 flex-col bg-white">
+      <h1 class="p-10 text-2xl font-normal text-zinc-800 w-full text-center !font-bold">{{ header }}</h1>
+      <div class="flex flex-row items-center gap-3 px-3 py-0">
+        <div class=" border h-16 w-16 rounded-full overflow-hidden">
+          <img :src="user.photo" alt="" class="w-full h-full">
+        </div>
+        <p v-if="user" class="text-base font-normal text-zinc-800 p-2">
         {{ user.firstname }} {{ user.lastname }}
-      </p>
+        </p>
+      </div>
 
-      <!-- Navigation Panel -->
-      <nav class="flex flex-col space-y-6 pl-20 pt-14">
-        <a href="/dashboard" class="text-base font-normal text-zinc-800 hover:text-indigo-600">
+      <nav class="flex flex-col space-y-6 pl-10 pt-14">
+        <a href="dashboard" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <LayoutDashboard />
           Dashboard
         </a>
-        <a href="/test" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Course</a> 
-        <a href="/mylearning" class="text-base font-normal text-zinc-800 hover:text-indigo-600">My Learning</a>
-        <a href="/sandpit" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Sandpit</a>
-        <a href="/badges" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Badge</a> 
+        <a href="/test" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BookCopyIcon />Course</a> 
+        <a href="/mylearning" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BookCheckIcon/>My Learning</a> 
+        <a href="/sandpit" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <TerminalSquareIcon/>Sandpit</a> 
+        <a href="/badges" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BadgeCheckIcon/>Badge</a> 
 
-        <a href="/settings" class="text-base font-medium text-zinc-800 hover:text-indigo-600">Profiles</a>
+        <a href="/settings" class="text-base font-medium text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <UserCircle/>Profiles</a>
       </nav>
 
       <!-- Logout -->
       <nav class="flex flex-col space-y-6 pl-20 pt-60">
-        <a href="#" @click.prevent="showLogoutModal = true" class="text-base font-normal text-zinc-800 hover:text-indigo-600">
+        <a
+          href="#"
+          @click.prevent="showLogoutModal = true"
+          class="text-base font-normal text-zinc-800 hover:text-indigo-600"
+        >
           Logout
         </a>
       </nav>
@@ -123,8 +135,9 @@
 import { router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import axios from 'axios'
+import { LayoutDashboard , BookCopyIcon, BookCheckIcon, TerminalSquareIcon, BadgeCheckIcon, UserCircle } from 'lucide-vue-next';
 
-
+const header = "</HORIZON>"
 export default {
   props: {
     auth: Object

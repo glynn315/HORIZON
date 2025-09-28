@@ -1,36 +1,33 @@
 <template>
   <div class="flex h-screen w-full flex-wrap bg-zinc-800">
     <!-- Sidebar -->
-    <aside class="relative flex h-screen w-60 flex-col bg-white">
-      <!-- Logo and User Info -->
-      <h1 class="flex pl-10 pt-14 text-3xl font-normal text-zinc-800">Horizon</h1>
+    <aside class="flex h-screen w-60 flex-col bg-white">
+      <h1 class="p-10 text-2xl font-normal text-zinc-800 w-full text-center !font-bold">{{ header }}</h1>
+      <div class="flex flex-row items-center gap-3 px-3 py-0">
+        <div class=" border h-16 w-16 rounded-full overflow-hidden">
+          <img :src="user.photo" alt="" class="w-full h-full">
+        </div>
+        <p v-if="user" class="text-base font-normal text-zinc-800 p-2">
+        {{ user.firstname }} {{ user.lastname }}
+        </p>
+      </div>
 
-      <!-- Divider -->
-      <div class="absolute left-10 top-[124px] w-40 border-t border-gray-200"></div>
-
-      <!-- Profile Picture -->
-      <div class="absolute left-4 top-[138px] h-16 w-16 rounded-full bg-white shadow-md"></div>
-
-      <!-- Username (Dynamic) -->
-      <p v-if="user" class="pl-24 pt-16 text-base font-normal text-zinc-800">
-       {{ user.firstname }} {{ user.lastname }}
-      </p>
-
-
-      <!-- Navigation Panel -->
-      <nav class="flex flex-col space-y-6 pl-20 pt-14">
-        <a href="dashboard" class="text-base font-normal text-zinc-800 hover:text-indigo-600">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-          </svg>
+      <nav class="flex flex-col space-y-6 pl-10 pt-14">
+        <a href="dashboard" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <LayoutDashboard />
           Dashboard
         </a>
-        <a href="/test" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Course</a> 
-        <a href="/mylearning" class="text-base font-normal text-zinc-800 hover:text-indigo-600">My Learning</a> 
-        <a href="/sandpit" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Sandpit</a> 
-        <a href="/badges" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Badge</a> 
+        <a href="/test" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BookCopyIcon />Course</a> 
+        <a href="/mylearning" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BookCheckIcon/>My Learning</a> 
+        <a href="/sandpit" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <TerminalSquareIcon/>Sandpit</a> 
+        <a href="/badges" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <BadgeCheckIcon/>Badge</a> 
 
-        <a href="/settings" class="text-base font-medium text-zinc-800 hover:text-indigo-600">Profiles</a>
+        <a href="/settings" class="text-base font-medium text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
+          <UserCircle/>Profiles</a>
       </nav>
 
       <!-- Logout -->
@@ -135,7 +132,7 @@
 import { ref, onMounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { Chart, registerables } from 'chart.js'
-
+import { LayoutDashboard , BookCopyIcon, BookCheckIcon, TerminalSquareIcon, BadgeCheckIcon, UserCircle } from 'lucide-vue-next';
 Chart.register(...registerables)
 
 const { auth } = usePage().props
@@ -143,6 +140,7 @@ const user = auth.user
 
 const chartRefScore = ref(null)
 const chartRefTime = ref(null)
+const header = "</HORIZON>"
 let chartScore = null
 let chartTime = null
 
@@ -151,11 +149,8 @@ const progressData = ref([])
 const showLogoutModal = ref(false)
 
 onMounted(async () => {
-  // Load leaderboard
   const lbRes = await fetch('/api/leaderboard')
   leaderboard.value = await lbRes.json()
-
-  // Load progress from displayRatings
   const progRes = await fetch(`/api/rating/${user.id}`)
   const progressJson = await progRes.json()
   progressData.value = progressJson.progress_by_course

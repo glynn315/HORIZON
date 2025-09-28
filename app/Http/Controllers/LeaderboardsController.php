@@ -48,7 +48,6 @@ class LeaderboardsController extends Controller
         $user = User::findOrFail($id);
         $courses = Course::with('topics')->get();
 
-        // Fetch all post-type quiz attempts by this user
         $rawAttempts = QuizAttempt::where('user_id', $id)
             ->where('type', 'post')
             ->with('topic:id,title,course_id')
@@ -68,7 +67,7 @@ class LeaderboardsController extends Controller
             ];
         });
         $result = $courses->map(function ($course) use ($topicStats) {
-            $topics = $course->topics;
+            $topics = $course->topics->where('topicStatus', '!=', 'ARCHIVED');
 
             $completed = $topics->filter(fn($topic) => $topicStats->has($topic->id));
 
