@@ -914,8 +914,6 @@ const createStandaloneTopicForCourse = async (courseId) => {
             ? { headers: { 'Content-Type': 'multipart/form-data', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }
             : { headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } };
 
-        const res = await axios.post(postUrl, payload, config);
-
         const response = await axios.post(postUrl, payload, config);
         if (!standaloneTopics.value[courseId]) standaloneTopics.value[courseId] = [];
         standaloneTopics.value[courseId].push(response.data);
