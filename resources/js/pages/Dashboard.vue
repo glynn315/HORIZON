@@ -84,20 +84,39 @@
               <div
                 v-for="(course, idx) in progressData"
                 :key="idx"
-                class="mb-4 bg-white text-zinc-800 p-4 rounded shadow"
+                class="mb-4 bg-white text-zinc-800 p-4 rounded shadow flex items-center justify-between"
               >
-                <h3 class="text-lg font-semibold">{{ course.course_name }}</h3>
-                <p class="text-sm">
-                  Topics Completed: <strong>{{ course.topics_completed }}</strong> /
-                  {{ course.topics_total }}
-                </p>
-                <p class="text-sm">Progress: <strong>{{ course.overall_progress }}%</strong></p>
+                <div>
+                  <h3 class="text-lg font-semibold">{{ course.course_name }}</h3>
+                  <p class="text-sm">
+                    Topics Completed:
+                    <strong>{{ course.topics_completed }}</strong> / {{ course.topics_total }}
+                  </p>
+                  <p class="text-sm">Progress: <strong>{{ course.overall_progress }}%</strong></p>
+                </div>
+                <div
+                  class="relative w-20 h-20 rounded-full"
+                  :style="{
+                    background: `conic-gradient(
+                      ${course.overall_progress >= 70 ? '#16a34a' : '#dc2626'} ${course.overall_progress}%,
+                      #e5e7eb ${course.overall_progress}%
+                    )`
+                  }"
+                >
+                  <div
+                    class="absolute inset-2 bg-white rounded-full flex items-center justify-center text-sm font-bold"
+                  >
+                    <span
+                      :class="course.overall_progress >= 70 ? 'text-green-600' : 'text-red-600'"
+                    >
+                      {{ course.overall_progress }}%
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-
             <div v-else class="text-sm text-gray-300 mt-4">No course progress yet.</div>
           </div>
-
         </div>
       </div>
     </main>

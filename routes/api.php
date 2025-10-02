@@ -156,16 +156,51 @@ Route::apiResource('lessons', LessonController::class);
 Route::get('/topics/{id}/lessons', [LessonController::class, 'byTopic']);
 Route::put('/lessons/{id}', [LessonController::class, 'update']);
 Route::post('/compile', [CompilerController::class, 'runCode']);
-Route::post('/simulate-laravel', function (Illuminate\Http\Request $request) {
+Route::post('/simulate-laravel', function (Request $request) {
     $code = $request->input('code');
+    $template = $request->input('template', '');
 
-    if (str_contains($code, 'return view')) {
-        return response()->json([
-            'output' => 'Simulated: Blade view returned'
-        ]);
+    // Default output
+    $output = 'Unknown Laravel code';
+
+    // Detect return view(...)
+    if (preg_match("/return\s+view\(['\"](\w+)['\"],\s*(\[.*\])\)/", $code, $matches)) {
+        $varsCode = $matches[2];   // ['users' => [...]]
+        $vars = eval("return $varsCode;");
+
+        $rendered = $template;
+
+        // ✅ Handle foreach loops
+        $rendered = preg_replace_callback(
+            '/@foreach\((\$\w+)\s+as\s+\$(\w+)\)(.*?)@endforeach/s',
+            function ($m) use ($vars) {
+                $collectionName = ltrim($m[1], '$'); // e.g. users
+                $itemName = $m[2];                   // e.g. user
+                $innerTemplate = $m[3];
+
+                $result = '';
+                foreach ($vars[$collectionName] as $item) {
+                    $line = preg_replace_callback(
+                        '/{{\s*' . $itemName . '\s*}}/',
+                        fn($mm) => $item,
+                        $innerTemplate
+                    );
+                    $result .= $line;
+                }
+                return $result;
+            },
+            $rendered
+        );
+
+        // ✅ Handle simple {{ var }}
+        $rendered = preg_replace_callback('/{{\s*(\w+)\s*}}/', function ($m) use ($vars) {
+            return $vars[$m[1]] ?? '';
+        }, $rendered);
+
+        $output = $rendered;
     }
 
     return response()->json([
-        'output' => 'Unknown Laravel code'
+        'output' => $output
     ]);
 });

@@ -31,8 +31,15 @@
         <div v-if="ModuleTopic">
           <h1 class="text-2xl font-bold mb-1 text-black">{{ currentTopic.title }}</h1>
           <p class="text-sm text-gray-800 mb-6">{{ currentTopic.module_name }}</p>
+          <div v-if="currentTopic.pdf_url" class="my-4">
+            <iframe 
+              :src="currentTopic.pdf_url" 
+              class="w-full h-[1000px] border" 
+              frameborder="0"
+            ></iframe>
+          </div>
 
-          <div class="h-[700px] overflow-auto scrollbar-w-1">
+          <div v-if="currentTopic.content" class="scrollbar-w-1">
             <div v-html="currentTopic.content" class="leading-relaxed text-black"></div>
           </div>
 
@@ -49,6 +56,7 @@
             </button>
           </div>
         </div>
+
 
         <div v-else-if="postTestDisplay">
           

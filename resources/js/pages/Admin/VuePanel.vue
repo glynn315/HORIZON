@@ -79,7 +79,7 @@
                                         <option value="3">Advanced</option>
                                     </select>
                                     <label class="block font-medium">Content</label>
-                                    <QuillEditor v-model:content="topic.content" contentType="html" class="rounded border bg-white" toolbar="full" />
+                                    <QuillEditor v-model:content="topic.content" contentType="html" class="border bg-white" toolbar="full" />
                                     <div class="flex gap-2">
                                         <button
                                             @click="updateStandaloneTopic(topic)"
@@ -97,42 +97,62 @@
                         <form @submit.prevent="createStandaloneTopicForCourse(course.id)" class="mb-4 w-full space-y-4">
                             <div class="flex flex-row gap-3">
                                 <div class="flex flex-col w-3/6">
-                                    <label class="mb-1 text-sm font-medium">Topic Title <span class="text-red-500">*</span></label>
-                                    <input v-model="newTopics[course.id].title" placeholder="Enter topic title" class="rounded-md border p-2" required />
-                                </div>
-                                <div class="flex flex-col w-2/6">
-                                    <label class="mb-1 text-sm font-medium">Module Name <span class="text-red-500">*</span></label>
+                                    <label class="mb-1 text-sm font-medium">
+                                    Topic Title <span class="text-red-500">*</span>
+                                    </label>
                                     <input
-                                        v-model="newTopics[course.id].module_name"
-                                        placeholder="Enter module name"
-                                        class="rounded-md border p-2"
-                                        required
+                                    v-model="newTopics[course.id].title"
+                                    placeholder="Enter topic title"
+                                    class="rounded-md border p-2"
+                                    required
                                     />
                                 </div>
-                                <div class="flex flex-col  w-1/6">
+
+                                <div class="flex flex-col w-2/6">
+                                    <label class="mb-1 text-sm font-medium">
+                                    Module Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                    v-model="newTopics[course.id].module_name"
+                                    placeholder="Enter module name"
+                                    class="rounded-md border p-2"
+                                    required
+                                    />
+                                </div>
+
+                                <div class="flex flex-col w-1/6">
                                     <label class="block font-medium">Difficulty</label>
                                     <select v-model="newTopics[course.id].difficulty" class="w-full rounded border p-2" required>
-                                        <option disabled value="">-- Select Difficulty --</option>
-                                        <option value="1">Beginner</option>
-                                        <option value="2">Intermediate</option>
-                                        <option value="3">Advanced</option>
+                                    <option disabled value="">-- Select Difficulty --</option>
+                                    <option value="1">Beginner</option>
+                                    <option value="2">Intermediate</option>
+                                    <option value="3">Advanced</option>
                                     </select>
                                 </div>
                             </div>
 
                             <label class="block font-medium">Content</label>
                             <QuillEditor
-                                v-model:content="newTopics[course.id].content"
-                                contentType="html"
-                                class="rounded border bg-white"
-                                toolbar="full"
+                            v-model:content="newTopics[course.id].content"
+                            contentType="html"
+                            class="rounded border bg-white"
+                            toolbar="full"
                             />
+                            <div class="flex flex-col mt-2">
+                                <label class="block font-medium">Upload PDF (optional)</label>
+                                <input type="file" accept="application/pdf" @change="handlePdfUpload($event, course.id)" />
+                                <div v-if="newTopics[course.id].pdfPreview" class="mt-2">
+                                    <iframe :src="newTopics[course.id].pdfPreview" width="100%" height="400px"></iframe>
+                                </div>
+                            </div>
+
                             <button type="submit" class="rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700">
                                 <span v-if="newTopics[course.id].loading">Adding...</span>
                                 <span v-else>Add Topic</span>
                             </button>
                         </form>
                     </div>
+
                     <div v-if="activeTab[course.id] === 'archived'" class="p-5">
                         <div v-if="archivedTopics[course.id] && archivedTopics[course.id].length > 0">
                             <ul>
@@ -151,18 +171,18 @@
                 <h2 class="mb-4 text-2xl font-bold">Quiz Management</h2>
                 <div class="mb-6 flex gap-3">
                     <button
-                        @click="quizTab = 'create'"
-                        :class="quizTab === 'create' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'"
-                        class="rounded px-4 py-2"
-                    >
-                        Create Quiz
-                    </button>
-                    <button
                         @click="quizTab = 'uploaded'"
                         :class="quizTab === 'uploaded' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'"
                         class="rounded px-4 py-2"
                     >
                         Uploaded Quizzes
+                    </button>
+                    <button
+                        @click="quizTab = 'create'"
+                        :class="quizTab === 'create' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'"
+                        class="rounded px-4 py-2"
+                    >
+                        Create Quiz
                     </button>
                     <button
                         @click="quizTab = 'archive'"
@@ -548,7 +568,7 @@ import Sandpit from '../sandpitComponent.vue';
 import { Archive, PenBoxIcon, RefreshCcw, X, Trash2 } from 'lucide-vue-next';
 
 const leaderboard = ref([]);
-const quizTab = ref('pretest');
+const quizTab = ref('uploaded');
 const lessonsByTopic = ref({});
 const newLesson = ref({});
 const lessonToggles = ref({});
@@ -852,30 +872,69 @@ const fetchAllTopics = async () => {
     const res = await axios.get('/api/topics/fetchpercourse/1');
     allTopics.value = res.data;
 };
+const handlePdfUpload = (event, courseId) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        newTopics.value[courseId].pdfFile = file;
+        newTopics.value[courseId].pdfPreview = URL.createObjectURL(file);
+    } else {
+        newTopics.value[courseId].pdfFile = null;
+        newTopics.value[courseId].pdfPreview = null;
+    }
+};
 const createStandaloneTopicForCourse = async (courseId) => {
     const course = courses.value.find((c) => c.id === courseId);
     const isLaravel = course.name === 'Laravel Frameworks';
     errorMessages.value[courseId] = '';
     newTopics.value[courseId].loading = true;
+
     try {
-        const postUrl = isLaravel ? `/api/courses/${courseId}/laravel-topics` : `/api/courses/${courseId}/topics`;
-        const response = await axios.post(postUrl, newTopics.value[courseId]);
-        if (!response.data.course_id) {
-            response.data.course_id = courseId;
+        const postUrl = isLaravel
+            ? `/api/courses/${courseId}/laravel-topics`
+            : `/api/courses/${courseId}/topics`;
+
+        let payload;
+        if (newTopics.value[courseId].pdfFile) {
+            payload = new FormData();
+            payload.append('title', newTopics.value[courseId].title);
+            payload.append('module_name', newTopics.value[courseId].module_name || '');
+            payload.append('difficulty', newTopics.value[courseId].difficulty || '');
+            payload.append('content', newTopics.value[courseId].content || '');
+            payload.append('pdf_path', newTopics.value[courseId].pdfFile);
+        } else {
+            payload = {
+                title: newTopics.value[courseId].title,
+                module_name: newTopics.value[courseId].module_name,
+                difficulty: newTopics.value[courseId].difficulty,
+                content: newTopics.value[courseId].content,
+            };
         }
+
+        const config = newTopics.value[courseId].pdfFile
+            ? { headers: { 'Content-Type': 'multipart/form-data', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }
+            : { headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } };
+
+        const res = await axios.post(postUrl, payload, config);
+
+        const response = await axios.post(postUrl, payload, config);
+        if (!standaloneTopics.value[courseId]) standaloneTopics.value[courseId] = [];
         standaloneTopics.value[courseId].push(response.data);
-        newTopics.value[courseId] = { title: '', content: '', module_name: '', loading: false };
-        errorMessages.value[courseId] = '';
-    } catch (e) {
-        errorMessages.value[courseId] = e.response?.data?.message || 'Failed to add topic';
+        newTopics.value[courseId] = { title: '', module_name: '', difficulty: '', content: '', pdfUrl: null, pdfUrl: '', loading: false };
+
+        alert('Topic added successfully!');
+    } catch (error) {
+        console.error(error);
+        errorMessages.value[courseId] = error.response?.data?.message || 'Failed to add topic';
     } finally {
         newTopics.value[courseId].loading = false;
     }
 };
 
+
+
 const updateStandaloneTopic = async (topic) => {
     const course = courses.value.find((c) => c.id === topic.course_id);
-    const isLaravel = course.name === 'Laravel Frameworks';
+    const isLaravel = course.name === 'Vue Frameworks';
     const updateUrl = isLaravel ? `/api/laravel-topics/${topic.id}` : `/api/topics/${topic.id}`;
     await axios.put(updateUrl, topic);
     editingTopicId.value = null;

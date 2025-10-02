@@ -19,14 +19,17 @@
         </button>
       </div>
 
-      <!-- Code Area -->
-      <textarea
-        v-model="codeSections[activeTab]"
-        :readonly="activeTab === 'instruction'"
-        rows="12"
-        class="w-full border rounded-md p-2 font-mono bg-slate-800 text-white"
-        style="scrollbar-width: thin;"
-      ></textarea>
+      <!-- Editor -->
+      <div v-if="activeTab !== 'instruction'" class="h-[400px] rounded-md border">
+        <div ref="editorContainer" class="h-full w-full"></div>
+      </div>
+      <div
+        v-else
+        class="h-[400px] overflow-y-auto rounded-md border bg-gray-100 p-4 font-mono text-sm"
+      >
+        <pre>{{ codeSections.instruction }}</pre>
+      </div>
+
       <p class="mt-2 text-sm text-gray-600">Lines: {{ lineCount }} / 3000</p>
 
       <!-- Run -->
@@ -54,26 +57,25 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import loader from '@monaco-editor/loader'
 
 /**
- * mode prop replaces the dropdown.
- * Pass "vue" or "laravel" when using this component.
+ * mode prop (vue | laravel)
  */
 const props = defineProps({
   mode: {
     type: String,
-    default: 'vue', // fallback
+    default: 'vue',
   },
 })
 
 const activeTab = ref('template')
 
 const tabs = {
-  vue: ['template', 'instruction'],
+  vue: ['template', 'script', 'style', 'instruction'],
   laravel: ['template', 'web.php', 'style', 'instruction'],
 }
-
 const visibleTabs = computed(() => tabs[props.mode])
 
 const codeSections = ref({
@@ -81,70 +83,44 @@ const codeSections = ref({
   script: '',
   style: '',
   'web.php': '',
-  instruction: '',
+  instruction: '# Instructions will appear here',
 })
 
 const compiledHtml = ref('')
 const error = ref('')
+const editorContainer = ref(null)
+let editorInstance = null
 
-watch(
-  () => props.mode,
-  (lang) => {
-    codeSections.value.instruction = `# Vue and Laravel Sandbox Playground Instructions
+const editorLanguage = computed(() => {
+  if (activeTab.value === 'template') return 'html'
+  if (activeTab.value === 'style') return 'css'
+  if (activeTab.value === 'script') return 'javascript'
+  if (activeTab.value === 'web.php') return 'php'
+  return 'plaintext'
+})
 
-Welcome to your interactive Vue/Laravel sandbox! This tool helps you test and render code in real time.
+onMounted(async () => {
+  const monaco = await loader.init()
+  editorInstance = monaco.editor.create(editorContainer.value, {
+    value: codeSections.value[activeTab.value],
+    language: editorLanguage.value,
+    theme: 'vs-dark',
+    automaticLayout: true,
+    fontSize: 14,
+    minimap: { enabled: false },
+  })
+  editorInstance.onDidChangeModelContent(() => {
+    codeSections.value[activeTab.value] = editorInstance.getValue()
+  })
+})
 
----
-
-### 🧠 Tabs Overview
-
-- **template**: Your main HTML or Blade content.
-- **web.php**: (Laravel only) Simulate server-side data with PHP-like variables.
-- **style**: Add CSS styling for your rendered output.
-- **instruction**: You're reading it! Read-only tab for guidance.
-
----
-
-### ▶️ Running Code
-1. Write code in the active tab.
-2. Press **Run** to see the rendered output.
-`
-    if (lang === 'laravel') {
-      activeTab.value = 'template'
-      codeSections.value.template = `<div>
-  <h1>Hello, {{ name }}</h1>
-
-  @if(isAdmin)
-      <p>Welcome back, administrator!</p>
-  @else
-      <p>You are logged in as a regular user.</p>
-  @endif
-
-  <ul>
-      @foreach($tasks as $task)
-      <li>{{ task }}</li>
-      @endforeach
-  </ul>
-</div>`
-      codeSections.value['web.php'] = `$name = "Jane";
-$isAdmin = true;
-$tasks = ["Write docs", "Fix bug", "Deploy"];`
-      codeSections.value.style = `body { font-family: sans-serif; padding: 20px; }`
-    } else {
-      activeTab.value = 'template'
-      codeSections.value.template = `<header>
-<h1>WELCOME TO SANDPIT</h1> 
-</header>
-
-<scr` + `ipt>
-</scr` + `ipt>
-
-<sty` + `le>
-</sty` + `le>`
-    }
-  },
-  { immediate: true }
-)
+watch([activeTab, editorLanguage], async ([newTab, newLang]) => {
+  if (!editorInstance) return
+  const monaco = await loader.init()
+  const model = editorInstance.getModel()
+  editorInstance.setValue(codeSections.value[newTab] || '')
+  monaco.editor.setModelLanguage(model, newLang)
+})
 
 function parseWebPhp(phpCode) {
   const lines = phpCode.split('\n')
@@ -155,7 +131,6 @@ function parseWebPhp(phpCode) {
       let [key, value] = line.split('=')
       key = key.replace('$', '').trim()
       value = value.trim().replace(/;$/, '')
-
       try {
         if (value.startsWith('"') || value.startsWith("'")) {
           data[key] = value.replace(/^["']|["']$/g, '')
@@ -178,19 +153,18 @@ function runCode() {
     if (props.mode === 'vue') {
       compiledHtml.value = `
         <html>
-        <head>
-        <style>${codeSections.value.style}</style>
-        </head>
-        <body>
-        <div id="app">
-          ${codeSections.value.template}
-        </div>
-        <script>
-          ${codeSections.value.script}
-        <\/script>
-        </body>
-        </html>
-      `
+          <head>
+            <style>${codeSections.value.style}</style>
+          </head>
+          <body>
+            <div id="app">
+              ${codeSections.value.template}
+            </div>
+            <script>
+              ${codeSections.value.script}
+            <\/script>
+          </body>
+        </html>`
     } else if (props.mode === 'laravel') {
       const data = parseWebPhp(codeSections.value['web.php'])
       let rendered = codeSections.value.template
@@ -200,18 +174,7 @@ function runCode() {
       rendered = rendered.replace(
         /@if\s*\((.*?)\)([\s\S]*?)@else([\s\S]*?)@endif/g,
         (_, condition, ifTrue, elseBlock) => {
-          if (
-            condition.includes('=') &&
-            !condition.includes('==') &&
-            !condition.includes('>=') &&
-            !condition.includes('<=') &&
-            !condition.includes('!=')
-          ) {
-            throw new Error(
-              'Use "==", ">=", "<=" etc. for comparison in @if. Avoid single "=" (assignment).'
-            )
-          }
-          const expr = condition.replace(/(\w+)/g, 'data.$1')
+          const expr = condition.replace(/\$(\w+)/g, (_, v) => JSON.stringify(data[v] ?? null))
           return eval(expr) ? ifTrue : elseBlock
         }
       )
@@ -231,14 +194,13 @@ function runCode() {
 
       compiledHtml.value = `
         <html>
-        <head>
-        <style>${codeSections.value.style}</style>
-        </head>
-        <body>
-        ${rendered}
-        </body>
-        </html>
-      `
+          <head>
+            <style>${codeSections.value.style}</style>
+          </head>
+          <body>
+            ${rendered}
+          </body>
+        </html>`
     }
   } catch (err) {
     error.value = 'Error: ' + err.message

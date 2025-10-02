@@ -15,6 +15,7 @@ class Topic extends Model
         'module_name',
         'difficulty',
         'content',
+        'pdf_path',
         'topicStatus'
     ];
 

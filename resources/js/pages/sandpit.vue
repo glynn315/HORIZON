@@ -1,299 +1,240 @@
 <template>
     <div class="flex h-screen w-full flex-wrap">
+        <!-- Sidebar -->
         <aside class="flex h-screen w-60 flex-col bg-white">
-            <h1 class="p-10 text-2xl font-normal text-zinc-800 w-full text-center !font-bold">{{ header }}</h1>
+            <h1 class="w-full p-10 text-center text-2xl !font-bold font-normal text-zinc-800">{{ header }}</h1>
             <div class="flex flex-row items-center gap-3 px-3 py-0">
-                <div class=" border h-16 w-16 rounded-full overflow-hidden">
-                <img :src="user.photo" alt="" class="w-full h-full">
+                <div class="h-16 w-16 overflow-hidden rounded-full border">
+                    <img :src="user.photo" alt="" class="h-full w-full" />
                 </div>
-                <p v-if="user" class="text-base font-normal text-zinc-800 p-2">
-                {{ user.firstname }} {{ user.lastname }}
-                </p>
+                <p v-if="user" class="p-2 text-base font-normal text-zinc-800">{{ user.firstname }} {{ user.lastname }}</p>
             </div>
-
             <nav class="flex flex-col space-y-6 pl-10 pt-14">
-                <a href="dashboard" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <LayoutDashboard />
-                Dashboard
+                <a href="dashboard" class="flex items-center gap-2 text-base font-normal text-zinc-800 hover:text-indigo-600">
+                    <LayoutDashboard /> Dashboard
                 </a>
-                <a href="/test" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <BookCopyIcon />Course</a> 
-                <a href="/mylearning" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <BookCheckIcon/>My Learning</a> 
-                <a href="/sandpit" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <TerminalSquareIcon/>Sandpit</a> 
-                <a href="/badges" class="text-base font-normal text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <BadgeCheckIcon/>Badge</a> 
-
-                <a href="/settings" class="text-base font-medium text-zinc-800 hover:text-indigo-600 flex flex-row items-center gap-2">
-                <UserCircle/>Profiles</a>
+                <a href="/test" class="flex items-center gap-2 text-base font-normal text-zinc-800 hover:text-indigo-600">
+                    <BookCopyIcon /> Course
+                </a>
+                <a href="/mylearning" class="flex items-center gap-2 text-base font-normal text-zinc-800 hover:text-indigo-600">
+                    <BookCheckIcon /> My Learning
+                </a>
+                <a href="/sandpit" class="flex items-center gap-2 text-base font-normal text-zinc-800 hover:text-indigo-600">
+                    <TerminalSquareIcon /> Sandpit
+                </a>
+                <a href="/badges" class="flex items-center gap-2 text-base font-normal text-zinc-800 hover:text-indigo-600">
+                    <BadgeCheckIcon /> Badge
+                </a>
+                <a href="/settings" class="flex items-center gap-2 text-base font-medium text-zinc-800 hover:text-indigo-600">
+                    <UserCircle /> Profiles
+                </a>
             </nav>
-
             <!-- Logout -->
             <nav class="flex flex-col space-y-6 pl-20 pt-60">
-                <a
-                href="#"
-                @click.prevent="showLogoutModal = true"
-                class="text-base font-normal text-zinc-800 hover:text-indigo-600"
-                >
-                Logout
-                </a>
+                <a href="#" @click.prevent="showLogoutModal = true" class="text-base font-normal text-zinc-800 hover:text-indigo-600">Logout</a>
             </nav>
-            </aside>
+        </aside>
 
-        <!-- Main Area -->
-        <main class="flex-1 p-6 overflow-y-auto">
-        <h2 class="text-2xl font-bold mb-4">Sandpit</h2>
+        <main class="flex-1 overflow-y-auto p-6">
+            <h2 class="mb-4 text-2xl font-bold">Sandpit</h2>
+            <div class="mb-4">
+                <label class="mr-2 font-medium">Language:</label>
+                <select v-model="selectedLanguage" class="rounded border p-1">
+                    <option value="vue">Vue.js</option>
+                    <option value="laravel">Laravel Blade</option>
+                </select>
+            </div>
+            <div class="mb-2 flex space-x-4 border-b">
+                <button
+                    v-for="tab in visibleTabs"
+                    :key="tab"
+                    @click="activeTab = tab"
+                    :class="['border-b-2 px-4 py-1', activeTab === tab ? 'border-indigo-500 font-semibold' : 'border-transparent']"
+                >
+                    {{ tab }}
+                </button>
+            </div>
+            <div v-if="activeTab !== 'instruction'" class="h-[400px] rounded-md border">
+                <div ref="editorContainer" class="h-full w-full"></div>
+            </div>
+            <div v-else class="h-[400px] overflow-y-auto rounded-md border bg-gray-100 p-4 font-mono text-sm">
+                <pre>{{ codeSections.instruction }}</pre>
+            </div>
 
-        <!-- Language Select -->
-        <div class="mb-4">
-            <label class="mr-2 font-medium">Language:</label>
-            <select v-model="selectedLanguage" class="border p-1 rounded">
-            <option value="vue">Vue.js</option>
-            <option value="laravel">Laravel Blade</option>
-            </select>
-        </div>
+            <p class="mt-2 text-sm text-gray-600">Lines: {{ lineCount }} / 3000</p>
 
-        <!-- Tabs -->
-        <div class="mb-2 flex space-x-4 border-b">
-            <button
-            v-for="tab in visibleTabs"
-            :key="tab"
-            @click="activeTab = tab"
-            :class="[
-                'py-1 px-4 border-b-2',
-                activeTab === tab ? 'border-indigo-500 font-semibold' : 'border-transparent',
-            ]"
-            >
-            {{ tab }}
-            </button>
-        </div>
-
-        <!-- Code Area -->
-        <textarea
-        v-model="codeSections[activeTab]"
-        :readonly="activeTab === 'instruction'"
-        rows="12"
-        class="w-full border rounded-md p-2 font-mono bg-slate-800 text-white"
-        style="scrollbar-width: thin;"
-        ></textarea>
-        <p class="mt-2 text-sm text-gray-600">Lines: {{ lineCount }} / 3000</p>
-
-        <!-- Run -->
-        <div class="mt-3">
-            <button @click="runCode" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Run
-            </button>
-        </div>
-
-        <!-- Error -->
-        <div v-if="error" class="mt-4 text-red-500 font-mono bg-red-100 p-2 rounded">
-            {{ error }}
-        </div>
-
-        <!-- Result -->
-        <div class="mt-6">
-            <h3 class="text-lg font-semibold mb-2">Result:</h3>
-            <iframe :srcdoc="compiledHtml" class="w-full h-[400px] border rounded-md"></iframe>
-        </div>
+            <div class="mt-3 flex gap-3">
+                <button @click="runCode" class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Run</button>
+            </div>
+            <div v-if="error" class="mt-4 rounded bg-red-100 p-2 font-mono text-red-500">
+                {{ error }}
+            </div>
+            <div class="mt-6">
+                <h3 class="mb-2 text-lg font-semibold">Result:</h3>
+                <iframe :srcdoc="compiledHtml" class="h-[400px] w-full rounded-md border"></iframe>
+            </div>
         </main>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { usePage, router } from '@inertiajs/vue3'
-import { LayoutDashboard , BookCopyIcon, BookCheckIcon, TerminalSquareIcon, BadgeCheckIcon, UserCircle } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3';
+import loader from '@monaco-editor/loader';
+import { BadgeCheckIcon, BookCheckIcon, BookCopyIcon, LayoutDashboard, TerminalSquareIcon, UserCircle } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 
-const header = "</HORIZON>"
-const { auth } = usePage().props
-const user = auth.user
-    const selectedLanguage = ref('vue')
-    const activeTab = ref('template')
+const header = '</HORIZON>';
+const { auth } = usePage().props;
+const user = auth.user;
 
-    const tabs = {
-    vue: ['template', 'instruction'],
-    laravel: ['template', 'web.php', 'style', 'instruction']
-    }
+const selectedLanguage = ref('vue');
+const activeTab = ref('compiler');
+const tabs = {
+    vue: ['compiler', 'script', 'style', 'instruction'],
+    laravel: ['compiler', 'web.php', 'style', 'instruction'],
+};
+const visibleTabs = computed(() => tabs[selectedLanguage.value]);
 
-    const visibleTabs = computed(() => tabs[selectedLanguage.value])
-
-    const codeSections = ref({
-    template: '',
+const codeSections = ref({
+    compiler: '',
     script: '',
     style: '',
     'web.php': '',
-    instruction: ''
-    })
+    instruction: '# Instructions will appear here',
+});
 
-    const compiledHtml = ref('')
-    const error = ref('')
-    watch(selectedLanguage, (lang) => {
-        codeSections.value.instruction = `# Vue and Laravel Sandbox Playground Instructions
+const editorContainer = ref(null);
+let editorInstance = null;
+const error = ref('');
+const compiledHtml = ref('');
 
-Welcome to your interactive Vue/Laravel sandbox! This tool helps you test and render code in real time.
+const editorLanguage = computed(() => {
+    if (activeTab.value === 'compiler') return 'html';
+    if (activeTab.value === 'style') return 'css';
+    if (activeTab.value === 'script') return 'javascript';
+    if (activeTab.value === 'web.php') return 'php';
+    return 'plaintext';
+});
 
----
+onMounted(async () => {
+    const monaco = await loader.init();
+    editorInstance = monaco.editor.create(editorContainer.value, {
+        value: codeSections.value[activeTab.value],
+        language: editorLanguage.value,
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 14,
+        minimap: { enabled: false },
+    });
+    editorInstance.onDidChangeModelContent(() => {
+        codeSections.value[activeTab.value] = editorInstance.getValue();
+    });
+});
 
-### 🧠 Tabs Overview
+watch([activeTab, editorLanguage], async ([newTab, newLang]) => {
+    if (!editorInstance) return;
+    const monaco = await loader.init();
+    const model = editorInstance.getModel();
+    editorInstance.setValue(codeSections.value[newTab] || '');
+    monaco.editor.setModelLanguage(model, newLang);
+});
 
-- **template**: Your main HTML or Blade content.
-- **web.php**: (Laravel only) Simulate server-side data with PHP-like variables.
-- **style**: Add CSS styling for your rendered output.
-- **instruction**: You're reading it! Read-only tab for guidance.
+const lineCount = computed(() => {
+    const code = codeSections.value[activeTab.value] || '';
+    return code.split('\n').length;
+});
 
----
-
-### ✏️ Usage
-
-- Use  to interpolate values.
-- Laravel mode supports:
-  - \`@if(condition) ... @else ... @endif\`
-  - \`@foreach($array as $item) ... @endforeach\`
-
----
-
-### ⚠️ Limits
-
-- Each tab can contain up to **3000 lines**.
-- A line counter is visible at the top.
-- Editing is **disabled** in this tab.
-
----
-
-### ▶️ Running Code
-
-1. Select a tab and write your code.
-2. Press **Run** to see the output rendered below.
-3. Output supports raw HTML and basic Blade-like syntax.
-
----
-
-Happy coding! 🚀
-`
-
-    if (lang === 'laravel') {
-        activeTab.value = 'template'
-        codeSections.value.template = `<div>
-    <h1>Hello, {{ name }}</h1>
-
-    @if(isAdmin)
-        <p>Welcome back, administrator!</p>
-    @else
-        <p>You are logged in as a regular user.</p>
-    @endif
-
-    <ul>
-        @foreach($tasks as $task)
-        <li>{{ task }}</li>
-        @endforeach
-    </ul>
-    </div>`
-        codeSections.value['web.php'] = `$name = "Jane";
-    $isAdmin = true;
-    $tasks = ["Write docs", "Fix bug", "Deploy"];`
-        codeSections.value.style = `body { font-family: sans-serif; padding: 20px; }`
-    } else {
-        activeTab.value = 'template'
-        codeSections.value.template = `<header>
-<h1>WELCOME TO SANDPIT</h1> 
-</header>
-
-
-<scr` + `ipt>
-</scr` + `ipt>
-
-
-<sty` + `le>
-</sty` + `le>`;
-        }
-    })
-
-    function parseWebPhp(phpCode) {
-    const lines = phpCode.split('\n')
-    const data = {}
+function parseWebPhp(phpCode) {
+    const lines = phpCode.split('\n');
+    const data = {};
     for (let line of lines) {
-        line = line.trim()
+        line = line.trim();
         if (line.startsWith('$')) {
-        let [key, value] = line.split('=')
-        key = key.replace('$', '').trim()
-        value = value.trim().replace(/;$/, '')
-
-        try {
-
-            if (value.startsWith('"') || value.startsWith("'")) {
-            data[key] = value.replace(/^["']|["']$/g, '')
-            } else if (value.startsWith('[')) {
-            data[key] = eval(value)
-            } else {
-            data[key] = eval(value)
+            let [key, value] = line.split('=');
+            key = key.replace('$', '').trim();
+            value = value.trim().replace(/;$/, '');
+            try {
+                if (value.startsWith('"') || value.startsWith("'")) {
+                    data[key] = value.replace(/^["']|["']$/g, '');
+                } else if (value.startsWith('[')) {
+                    data[key] = eval(value);
+                } else {
+                    data[key] = eval(value);
+                }
+            } catch (e) {
+                console.warn('Failed parsing:', line);
             }
-        } catch (e) {
-            console.warn('Failed parsing:', line)
-        }
         }
     }
-    return data
-    }
-    function runCode() {
-    error.value = ''
+    return data;
+}
 
+function runCode() {
+    error.value = '';
     try {
         if (selectedLanguage.value === 'vue') {
             compiledHtml.value = `
-                <html>
-                <head>
+        <html>
+            <head>
                 <style>${codeSections.value.style}</style>
-                </head>
-                <body>
-                <div id="app">
-                    ${codeSections.value.template}
-                </div>
-                <script>
-                    ${codeSections.value.script}
-                <\/script>
-                </body>
-                </html>
-            `
-            } else if (selectedLanguage.value === 'laravel') {
-            const data = parseWebPhp(codeSections.value['web.php'])
-            let rendered = codeSections.value.template
-            rendered = rendered.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => data[key] ?? '')
+            </head>
+            <body>
+            <div id="app">
+                ${codeSections.value.compiler}
+            </div>
+            <script>
+                ${codeSections.value.script}
+            <\/script>
+            </body>
+        </html>`;
+        } else if (selectedLanguage.value === 'laravel') {
+            const data = parseWebPhp(codeSections.value['web.php']);
+            let rendered = codeSections.value.compiler;
 
-            rendered = rendered.replace(/@if\s*\((.*?)\)([\s\S]*?)@else([\s\S]*?)@endif/g, (_, condition, ifTrue, elseBlock) => {
-                if (condition.includes('=') && !condition.includes('==') && !condition.includes('>=') && !condition.includes('<=') && !condition.includes('!=')) {
-                throw new Error('Use "==", ">=", "<=" etc. for comparison in @if. Avoid single "=" (assignment).')
+            rendered = rendered.replace(/@if\s*\((.*?)\)([\s\S]*?)(@else([\s\S]*?))?@endif/g, (_, condition, ifBlock, elseBlock, elseContent) => {
+                try {
+                    const expr = condition.replace(/\$(\w+)/g, (_, v) => {
+                        return JSON.stringify(data[v] ?? null);
+                    });
+
+                    const result = eval(expr);
+                    if (result) {
+                        return ifBlock;
+                    } else {
+                        return elseContent || '';
+                    }
+                } catch (e) {
+                    return `<span style="color:red">[Error in @if condition: ${e.message}]</span>`;
                 }
-
-                const expr = condition.replace(/(\w+)/g, 'data.$1')
-                return eval(expr) ? ifTrue : elseBlock
-            })
-
-
+            });
             rendered = rendered.replace(/@foreach\s*\(\s*\$(\w+)\s+as\s+\$(\w+)\s*\)([\s\S]*?)@endforeach/g, (_, list, item, content) => {
-                const arr = data[list]
-                if (!Array.isArray(arr)) return ''
-                return arr.map(val => content.replace(new RegExp(`\\{\\{\\s*${item}\\s*\\}\\}`, 'g'), val)).join('')
-            })
+                const arr = data[list];
+                if (!Array.isArray(arr)) return '';
 
-
+                return arr
+                    .map((val) => {
+                        return content.replace(/\{\{\s*(\w+)\s*\}\}/g, (__, varName) => {
+                            if (varName === item) {
+                                return val;
+                            }
+                            return data[varName] ?? '';
+                        });
+                    })
+                    .join('');
+            });
+            rendered = rendered.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => data[key] ?? '');
             compiledHtml.value = `
-                <html>
+            <html>
                 <head>
-                <style>${codeSections.value.style}</style>
+                    <style>${codeSections.value.style}</style>
                 </head>
                 <body>
-                ${rendered}
+                    ${rendered}
                 </body>
-                </html>
-            `
-            }
-        } catch (err) {
-            error.value = 'Error: ' + err.message
+            </html>`;
         }
+    } catch (err) {
+        error.value = 'Error: ' + err.message;
     }
-const lineCount = computed(() => {
-  const code = codeSections.value[activeTab.value] || ''
-  return code.split('\n').length
-})
+}
 </script>

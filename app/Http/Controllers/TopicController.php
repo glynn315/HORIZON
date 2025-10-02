@@ -39,27 +39,44 @@ class TopicController extends Controller
      */
     public function store(Request $request, $course_id)
     {
+        // Validate input
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'module_name' => 'required|string|max:255',
             'difficulty' => 'required|in:1,2,3',
             'content' => 'required|string',
-
+            'pdf_path' => 'nullable|mimes:pdf|max:10240', // max 10MB
         ]);
 
+        // Ensure the course exists
         $course = Course::findOrFail($course_id); 
 
+        // Create new topic
         $topic = new Topic();
         $topic->title = $validated['title'];
         $topic->module_name = $validated['module_name'];
-        $topic->course_id = $course_id;;
+        $topic->course_id = $course_id;
         $topic->difficulty = $validated['difficulty'];
         $topic->content = $validated['content'];
         $topic->topicStatus = 'ACTIVE';
-        $topic->save();
 
-        return response()->json($topic, 201);
+        if ($request->hasFile('pdf_path')) {
+            $path = $request->file('pdf_path')->store('pdfs', 'public');
+            $topic->pdf_path = $path;
+        }
+
+        $topic->save();
+        return response()->json([
+            'id' => $topic->id,
+            'title' => $topic->title,
+            'module_name' => $topic->module_name,
+            'difficulty' => $topic->difficulty,
+            'content' => $topic->content,
+            'pdf_url' => $topic->pdf_path ? asset('' . $topic->pdf_path) : null,
+            'topicStatus' => $topic->topicStatus,
+        ], 201);
     }
+
     public function show(Topic $topic)
     {
         //
@@ -128,9 +145,26 @@ class TopicController extends Controller
     }
     public function getTopicsByCourse($id)
     {
-        $topics =Topic::where('course_id', $id)->where('topicStatus','ACTIVE')->get();
+        $topics = Topic::where('course_id', $id)
+            ->where('topicStatus', 'ACTIVE')
+            ->get()
+            ->map(function ($topic) {
+                return [
+                    'id' => $topic->id,
+                    'title' => $topic->title,
+                    'module_name' => $topic->module_name,
+                    'difficulty' => $topic->difficulty,
+                    'content' => $topic->content,
+                    'topicStatus' => $topic->topicStatus,
+                    'pdf_url' => $topic->pdf_path 
+                        ? asset('storage/' . $topic->pdf_path) 
+                        : null,
+                ];
+            });
+
         return response()->json($topics);
     }
+
 
     public function completeTopic($userId, $topicId)
     {

@@ -126,6 +126,29 @@
       </div>
     </div>
   </div>
+  <div v-if="showResultModal" class="fixed w-full inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="w-full max-w-md rounded-lg bg-white p-6 text-center text-gray-800 shadow-lg">
+      <h2 class="mb-4 text-xl font-semibold">{{ pretestResult.course }} Pretest Result</h2>
+      <p class="mb-2">Correct: {{ pretestResult.correct }} / {{ pretestResult.total }}</p>
+      <p class="mb-2">Score: {{ pretestResult.percentage }}%</p>
+      <p class="mb-4">Assigned Difficulty: 
+        <span class="font-bold text-green-600">
+          {{ ['Beginner', 'Intermediate', 'Advanced'][pretestResult.difficulty_level - 1] }}
+        </span>
+      </p>
+
+      <div v-if="pretestResult.weakestTopics?.length">
+        <p class="mb-4">{{ pretestResult.reviewMessage }}</p>
+      </div>
+
+      <button 
+        @click="goToCourse(pretestResult.course)" 
+        class="mt-6 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        Continue to Course
+      </button>
+    </div>
+  </div>
+
 </template>
 
 <script setup>
@@ -143,6 +166,8 @@ const showPretestModal = ref(false);
 const selectedCourse = ref('');
 const pretestQuestions = ref([]);
 const currentQuestionIndex = ref(0);
+const pretestResult = ref(null);
+const showResultModal = ref(false);
 const difficultyMap = ref({});
 const courseProgress = ref({ Vue: 0, Laravel: 0 });
 
@@ -153,7 +178,10 @@ function confirmLogout() {
     }
   });
 }
-
+function goToCourse(course) {
+  showResultModal.value = false;
+  router.visit(`/module${course.toLowerCase()}`);
+}
 function startCourse(course) {
   if (!difficultyMap.value[course]) {
     selectedCourse.value = course;
@@ -195,7 +223,7 @@ async function fetchPretestQuestions(course) {
         timeLeft.value--;
       } else {
         clearInterval(timerInterval);
-        submitPretest(); // auto submit on timeout
+        submitPretest();
       }
     }, 1000);
   } catch (error) {
@@ -210,15 +238,42 @@ function nextPretestQuestion() {
 }
 
 async function submitPretest() {
-
   if (timerInterval) clearInterval(timerInterval);
+
   const answered = pretestQuestions.value;
+
   const correctCount = answered.filter(q =>
     q.userAnswer?.toLowerCase().trim() === q.answer?.toLowerCase().trim()
   ).length;
 
   const total = answered.length;
   const percentage = correctCount / total;
+
+  const topicScores = {};
+  answered.forEach(q => {
+    if (!topicScores[q.topic]) {
+      topicScores[q.topic] = { correct: 0, total: 0 };
+    }
+    topicScores[q.topic].total++;
+    if (q.userAnswer?.toLowerCase().trim() === q.answer?.toLowerCase().trim()) {
+      topicScores[q.topic].correct++;
+    }
+  });
+
+  const topicPercentages = Object.entries(topicScores).map(([topic, data]) => {
+    return { topic, score: (data.correct / data.total) * 100 };
+  });
+
+  const lowestTopics = topicPercentages
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 2)
+    .map(t => t.topic);
+  let reviewMessage = '';
+  if (lowestTopics.length === 1) {
+    reviewMessage = `✨ You're making great progress! To grow even stronger, try focusing more on **${lowestTopics[0]}**. Keep it up 🚀.`;
+  } else if (lowestTopics.length === 2) {
+    reviewMessage = `✨ You're making great progress! To grow even stronger, try focusing on **${lowestTopics[0]}** and **${lowestTopics[1]}**. Strengthening these areas will really boost your journey 🚀.`;
+  }
 
   let difficulty_level = 1;
   if (percentage >= 1) difficulty_level = 3;
@@ -236,14 +291,26 @@ async function submitPretest() {
       })
     });
 
+    pretestResult.value = {
+      course: selectedCourse.value,
+      correct: correctCount,
+      total,
+      percentage: Math.round(percentage * 100),
+      difficulty_level,
+      reviewMessage,
+      weakestTopics: lowestTopics
+    };
+
     difficultyMap.value[selectedCourse.value] = difficulty_level;
     showPretestModal.value = false;
-    router.visit(`/module${selectedCourse.value.toLowerCase()}`);
+    showResultModal.value = true;
   } catch (err) {
     console.error(err);
     alert('Failed to save difficulty.');
   }
 }
+
+
 
 onMounted(async () => {
   try {
